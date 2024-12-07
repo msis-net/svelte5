@@ -1,9 +1,23 @@
+<script lang="ts">
+	import { page } from '$app/stores';
+</script>
+
 <svelte:head>
 	<title>About</title>
 	<meta name="description" content="About this app" />
 </svelte:head>
 
 <div class="text-column">
+	<div>
+		<div>$page.params.id: {$page.params.id}</div>
+		<div>$page.route.id: {$page.route.id}</div>
+		<div>$page.url.href: {$page.url.href}</div>
+		<div>$page.url.origin: {$page.url.origin}</div>
+		<div>$page.url.host: {$page.url.host}</div>
+		<div>$page.url.hostname: {$page.url.hostname}</div>
+		<div>$page.url.port: {$page.url.port}</div>
+		<div>$page.url.pathname: {$page.url.pathname}</div>
+	</div>
 	<h1>About this app</h1>
 
 	<p>

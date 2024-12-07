@@ -7,6 +7,12 @@ const config = {
 		adapter: adapter(),
 		paths: {
 			base: '/apps'
+		},
+		csrf: {
+			checkOrigin: false
+		},
+		routes: {
+			exclude: ['/socket.io/*']
 		}
 	},
 	preprocess: vitePreprocess()
