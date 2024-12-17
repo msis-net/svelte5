@@ -1,0 +1,13 @@
+version: "3"
+services:
+  apps:
+    build:
+      context: ./apps
+      dockerfile: "Dockerfile"
+    privileged: true
+    container_name: "apps"
+    working_dir: /app
+    #command: sh -c 'npm install && npm run build && npm run preview'
+    ports:
+      - "4444:3000"
+    tty: true
