@@ -1,0 +1,180 @@
+/**
+ * getPatient
+ * odata経由でAD_ORCAのpatientmodを実行
+ */
+import { json } from '@sveltejs/kit';
+import path from 'path';
+import fs from 'fs';
+import forge from 'node-forge';
+import fetch from 'node-fetch';
+import https from 'https';
+import { Orca } from '$lib/stores/rx.svelte';
+
+import { FMS_HOST, odataContext, odataAccount, odataPassword } from '$lib/Constant';
+import { promisify } from 'util';
+
+const readFile = promisify(fs.readFile);
+
+export async function POST(request: any) {
+	try {
+		const url = new URL(request.url);
+		// Read config file
+
+		// 設定を読み込む
+		const config = safeLoadConfig();
+		//console.log(config);
+
+		const orcaUrl = config.orcaUrl;
+		const orcaId = config.orcaId;
+		const orcaCertPassword = config.orcaCertPassword;
+		const orcaCertificate = config.orcaCertificate;
+		const orcaPassword = config.orcaPassword;
+		console.log('orcaUrl', orcaUrl);
+		console.log('orcaId', orcaId);
+		console.log('orcaPassword', orcaPassword);
+		console.log('orcaCertPassword', orcaCertPassword);
+		console.log('orcaCertificate', orcaCertificate);
+		console.log('orcaPassword', orcaPassword);
+
+		const certPath = path.join(process.cwd(), 'static', 'cert', orcaCertificate);
+		if (!fs.existsSync(certPath)) {
+			throw new Error(`Certificate file not found: ${certPath}`);
+		}
+		// .p12ファイルを読み込み
+		const p12Data = fs.readFileSync(certPath);
+		/**
+		 * const p12Buffer = await readFile(certPath);
+		 */
+		console.log('p12Data', p12Data);
+
+		// .p12ファイルを解析
+		const p12Asn1 = forge.asn1.fromDer(p12Data.toString('binary'));
+		const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, orcaCertPassword);
+		console.log('p12Asn1', p12Asn1);
+		console.log('p12', p12);
+
+		let privateKey = null;
+		let certificate = null;
+
+		// p12の内容を探索
+		p12.safeContents.forEach((safeContent) => {
+			safeContent.safeBags.forEach((safeBag) => {
+				if (safeBag.type === forge.pki.oids.pkcs8ShroudedKeyBag) {
+					// プライベートキーを取得
+					if (safeBag.key) {
+						privateKey = forge.pki.privateKeyToPem(safeBag.key);
+					}
+				} else if (safeBag.type === forge.pki.oids.certBag) {
+					// 証明書を取得
+					if (safeBag.cert) {
+						certificate = forge.pki.certificateToPem(safeBag.cert);
+					}
+				}
+			});
+		});
+		console.log('privateKey', privateKey);
+		console.log('certificate', certificate);
+
+		if (!privateKey || !certificate) {
+			throw new Error('Failed to extract private key or certificate from .p12 file.');
+		}
+
+		// https.Agentを作成
+		const agent = new https.Agent({
+			key: privateKey,
+			cert: certificate
+		});
+
+		const httpsAgent = new https.Agent({
+			pfx: p12Data,
+			passphrase: orcaCertPassword,
+			rejectUnauthorized: false // 開発時のみ。本番環境では true にすべき
+		});
+
+		const requestAPI = orcaUrl + '/api01rv2/patientgetv2?id=3';
+		const authHeader = 'Basic ' + Buffer.from(`${orcaId}:${orcaPassword}`).toString('base64');
+		console.log('requestAPI', requestAPI);
+		console.log('authHeader', authHeader);
+		// fetchを使用してリクエスト
+		const response = await fetch(requestAPI, {
+			method: 'GET', // 必要に応じて変更
+			headers: {
+				'Content-Type': 'application/xml',
+				Authorization: authHeader
+			},
+			agent: httpsAgent
+		});
+		const res = await response;
+		// レスポンスを返却
+		return await res.text();
+		/*
+		// HTTPS エージェントの設定
+		const httpsAgent = new https.Agent({
+			pfx: orcaCertPassword,
+			passphrase: orcaCertPassword,
+			rejectUnauthorized: false,
+			minVersion: 'TLSv1.2'
+		});
+		console.log('httpsAgent', httpsAgent);
+		// Set up basic auth header
+		
+		console.log('authHeader', authHeader);
+		// Make request with certificate auth
+
+		const requestAPI = orcaUrl + '/api01rv2/patientgetv2?id=3';
+		  */
+		/*const orcaResponse = await fetch(requestAPI, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/xml',
+				Authorization: authHeader
+			},
+			agent: httpsAgent
+		});
+
+		if (!orcaResponse.ok) {
+			throw new Error(`ORCA API request failed: ${orcaResponse.status} ${orcaResponse.statusText}`);
+		}
+
+		const res = await orcaResponse;
+		console.log('res', res);
+
+		return res;
+		*/
+	} catch (error) {
+		console.error('Error in POST handler:', error);
+		return json({ error: 'Internal server error' }, { status: 500 });
+	}
+}
+
+// 設定ファイルの読み込みを安全に行う関数
+// 設定ファイルの読み込みを安全に行う関数
+const safeLoadConfig = () => {
+	try {
+		const configPath = path.join(process.cwd(), 'static', 'config.json');
+		if (!fs.existsSync(configPath)) {
+			throw new Error('Config file not found');
+		}
+
+		const content = fs.readFileSync(configPath, 'utf8');
+		if (!content.trim()) {
+			throw new Error('Config file is empty');
+		}
+
+		const config = JSON.parse(content);
+
+		// 必須項目のチェック
+		/*
+		const required = ['orcaUrl', 'orcaId', 'orcaPassword', 'orcaCertificate', 'orcaCertPassword'];
+		for (const field of required) {
+			if (!config[field]) {
+				throw new Error(`Missing required field: ${field}`);
+			}
+		}*/
+
+		return config;
+	} catch (error) {
+		console.error('Config error:', error);
+		throw error;
+	}
+};

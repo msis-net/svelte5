@@ -1,0 +1,16 @@
+label {
+	@apply text-[0.8rem] mt-1;
+}
+
+.label {
+	@apply font-bold;
+}
+
+::placeholder {
+	font-size: 0.8em;
+}
+
+file,
+button {
+	font-size: 0.8em;
+}

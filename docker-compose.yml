@@ -11,3 +11,4 @@ services:
     ports:
       - "4444:3000"
     tty: true
+    restart: always

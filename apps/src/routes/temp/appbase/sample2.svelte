@@ -1,50 +1,74 @@
 <!--アプリ本体-->
+<script lang="ts">
+</script>
+
 <div class="workbase">
-	<div class="header">headder</div>
-	<div class="body p-1">
-		<div>
-			<div>head</div>
-			<div>head</div>
-			<div>head</div>
-			<div>head</div>
-			<div>head</div>
-			<div>head</div>
+	<div class="body flex space-x-1 p-2 bg-gray-200">
+		<div class="w-[20vw] flex flex-col bg-white">
+			<div class="head h-[15vh] bg-green-200">
+				<div>left:body:head/h-[15%]</div>
+			</div>
+			<div class="flex-grow overflow-auto bg-white">
+				<div class="sample bg-orange-200">
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+					<div>TEXT</div>
+				</div>
+			</div>
+			<div class="foot h-[15vh] bg-blue-200">
+				<div>left:body:foot/h-[15%]</div>
+			</div>
 		</div>
-		<div class="items-stretch">base</div>
-		<div>foot</div>
+		<div class="flex-auto flex flex-col bg-white">
+			<div class="head h-[35vh] bg-green-200">
+				<div>right:body:head/h-[35%]</div>
+			</div>
+			<div class="body flex-grow bg-white">
+				<div>right:body</div>
+			</div>
+			<div class="foot h-[25vh] bg-blue-200">
+				<div>right:body:foot/h-[25%]</div>
+			</div>
+		</div>
 	</div>
-	<div class="footer">footer</div>
 </div>
 
 <style>
 	.workbase {
-		@apply fixed inset-0 m-1 flex-col bg-green-300 p-1;
+		@apply fixed inset-0 m-1 flex-col space-y-1 bg-green-300 p-0;
+		min-height: 99vh;
 	}
 
-	.workbase div {
-		@apply bg-red-200;
-	}
-	.workbase .header,
-	.workbase .footer {
-		@apply /* 高さ12% */ h-[12vh];
-	}
 	.workbase .body {
-		@apply h-[calc(100vh-24vh-1rem)]; /* 12vh*2 とマージン調整残りの領域をすべて埋める */
-		overflow: auto; /* 必要に応じてスクロール */
+		@apply h-[100vh]; /* 12vh*2 とマージン調整残りの領域をすべて埋める */
+		overflow: hideen; /* 必要に応じてスクロール */
 	}
 
-	div {
-		@apply border border-gray-600;
-	}
-
-	/*幅が768i以上の時*/
-	@media (min-width: 768px) {
-		.header,
-		.footer {
-			display: none;
-		}
-		.workbase .body {
-			@apply h-[calc(100vh-1rem)]; /* 12vh*2 とマージン調整残りの領域をすべて埋める */
-		}
+	.sample div {
+		@apply border-b;
 	}
 </style>

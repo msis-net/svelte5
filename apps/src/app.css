@@ -23,7 +23,7 @@ html {
 body {
 	min-height: 100vh;
 	margin: 0;
-	font-size: clamp(0.1rem, 2.8vmin, 2rem);
+	font-size: clamp(0.1rem, 2.4vmin, 1.8rem);
 	/*
 	clamp(最大値,基本サイズ,最小値)
 	vw	viewport width	ビューポートの幅に対する割合
@@ -98,10 +98,9 @@ pre {
 
 input,
 button {
-	@apply: p-2;
+	@apply px-2 py-1;
 	font-size: inherit;
 	font-family: inherit;
-	padding: 4px;
 }
 
 input::placeholder {
@@ -111,6 +110,7 @@ input::placeholder {
 button:focus:not(:focus-visible) {
 	outline: none;
 }
+
 /*
 @media (min-width: 720px) {
 	h1 {

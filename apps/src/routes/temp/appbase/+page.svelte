@@ -16,7 +16,7 @@
 		return () => window.removeEventListener('resize', updateDimensions);
 	});
 
-	import Sample from './sample1.svelte';
+	import Sample from './sample3.svelte';
 </script>
 
 <!--画面サイズインジケータ-->
