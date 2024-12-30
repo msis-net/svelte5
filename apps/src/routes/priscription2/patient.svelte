@@ -6,6 +6,29 @@
 	onMount(async () => {
 		const ptid = Rx.ptid;
 		if (ptid) {
+			console.log('ptid', ptid);
+			try {
+				const response = await fetch(
+					`/api/orca?context=/api01rv2/patientgetv2&id=${ptid}&format=json`,
+					{
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					}
+				);
+				console.log('response', response);
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+
+				const data = await response.json();
+				return data;
+			} catch (error) {
+				console.error('Error:', error);
+				throw error;
+			}
+			/*
 			const param = {
 				scriptParameterValue: ptid
 			};
@@ -70,6 +93,7 @@
 				Rx.setPatient_Information(Patient_Information);
 				//console.log(Patient_Information);
 			}
+				*/
 		}
 	});
 </script>

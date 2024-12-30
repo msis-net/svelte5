@@ -37,7 +37,7 @@
 	$effect(() => {
 		const fetchData = async () => {
 			const ptid = Rx.ptid;
-			console.log(date, sryka, seqno);
+			//console.log(date, sryka, seqno);
 			if (sryka) {
 				const param = {
 					data: {
@@ -51,7 +51,7 @@
 						}
 					}
 				};
-				console.log(JSON.stringify(param));
+				//console.log(JSON.stringify(param));
 				const response = await fetch(`/api/orca?context=/api01rv2/medicalgetv2&class=02`, {
 					method: 'POST',
 					headers: {
@@ -66,7 +66,7 @@
 
 				const data = await response.json();
 
-				console.log(data);
+				//console.log(data);
 
 				const medicalget01res = data?.medicalget02res || null;
 
@@ -87,12 +87,12 @@
 						//受診履歴情報（繰り返し　５）
 						Medical_List_Information.forEach((medicalist: any) => {
 							Medical_Information = medicalist.Medical_Information;
-							console.log('Medical_Information', Medical_Information);
+							//console.log('Medical_Information', Medical_Information);
 							if (Medical_Information && Medical_Information.length > 0) {
 								//診療内容剤情報（繰り返し　１３５）
 								Medical_Information.forEach((medical: any) => {
 									const Medical_Class = medical.Medical_Class;
-									console.log('Medical_Class', Medical_Class);
+									//console.log('Medical_Class', Medical_Class);
 									if (/^1[1-4][0-3]$/.test(Medical_Class)) {
 										Medical_kbn['100'] = '診察';
 									} else if (/^14[8-9]$/.test(Medical_Class)) {
@@ -182,7 +182,7 @@
 				}
 			});
 		}
-		console.log('selectedList:', selectedList);
+		//console.log('selectedList:', selectedList);
 	}
 </script>
 

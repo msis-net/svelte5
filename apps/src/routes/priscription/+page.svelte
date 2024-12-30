@@ -2,6 +2,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Common } from '$lib/Common';
+
 	import { page } from '$app/stores';
 	import { Rx, Fcl, Ons, Web, Orca } from '$lib/stores/rx.svelte';
 	import Patient from './patient.svelte';
@@ -13,20 +14,22 @@
 
 	import Medicalget01 from './medicalget01.svelte';
 	import Medicalget02 from './medicalget02.svelte';
-	// 初期値を設定
 
+	// 初期値を設定
 	const url = new URL($page.url.href);
 	Rx.setPtid(url.searchParams.get('ptid') ?? '');
 	Rx.setYmd(url.searchParams.get('ymd') ?? '');
 	Rx.setCmbnum(url.searchParams.get('cmbnum') ?? '');
 	Rx.setSryka(url.searchParams.get('sryka') ?? '');
+
+	//import type { PageServerLoad } from './$types';
+	//const { data } = $props<{ data: PageServerLoad }>();
+
 	$effect(() => {});
 
 	onMount(async () => {
 		if (Rx.ymd) {
-			const d = new Date(Rx.ymd);
-			const wareki = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', { era: 'narrow' }).format(d);
-			Common.setFormData('date', wareki.replace(/\//g, '.'));
+			Common.setFormData('date', Common.wareki(Rx.ymd));
 		}
 
 		const titleElement = document.getElementById('title');
@@ -274,7 +277,12 @@
 	onkeypress={(e) => e.key === 'Enter' && hideModal()}
 -->
 
-<div id="modal" role="button" tabindex="0" class="fixed inset-0 m-0 p-0 bg-gray-500 bg-opacity-30">
+<div
+	id="modal"
+	role="button"
+	tabindex="0"
+	class="hidden fixed inset-0 m-0 p-0 bg-gray-500 bg-opacity-30"
+>
 	<div class="flex items-center justify-center h-full w-full">
 		<Medicalget02
 			date={Perform_Date ?? ''}

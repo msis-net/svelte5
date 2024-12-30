@@ -55,10 +55,8 @@
 				}
 				if (Patient_Information.BirthDate) {
 					const d = new Date(Patient_Information.BirthDate);
-					const wareki = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', { era: 'narrow' }).format(
-						d
-					); //narrow,short,logn
-					Common.setElementData('BirthDate', wareki.replace(/\//g, '.'));
+
+					Common.setElementData('BirthDate', Common.wareki(Patient_Information.BirthDate));
 
 					//年齢を計算する
 					try {

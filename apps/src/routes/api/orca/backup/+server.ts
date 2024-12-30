@@ -16,7 +16,7 @@ const readFile = promisify(fs.readFile);
 
 export const GET: RequestHandler = async ({ request }) => {
 	const url = new URL(request.url);
-	//console.log(url);
+
 	//searchParamsを取得
 	const searchParams = url.searchParams;
 	const params = Object.fromEntries(searchParams.entries());
@@ -493,7 +493,7 @@ function removeChildArrays(obj: any, index?: number): any {
 			for (const n in objList) {
 				if (n.replace(key, '') === '_child') {
 					const type = Array.isArray(objList[n]) ? 'array' : typeof objList[n];
-					//console.log(key, type);
+					console.log(key, type);
 					//子要素が1つの場合は配列[]ではなくオブジェクト{}になっている場合があるので配列で統一する
 					if (type === 'array') {
 						result[key] = objList[n];

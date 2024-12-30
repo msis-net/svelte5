@@ -2,7 +2,6 @@
  * ORCA API対応
  */
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import path from 'path';
 import fs from 'fs';
 import forge from 'node-forge';
@@ -14,9 +13,9 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 import { DOMParser, XMLSerializer } from 'xmldom';
 const readFile = promisify(fs.readFile);
 
-export const GET: RequestHandler = async ({ request }) => {
+export async function GET(request: any) {
 	const url = new URL(request.url);
-	//console.log(url);
+
 	//searchParamsを取得
 	const searchParams = url.searchParams;
 	const params = Object.fromEntries(searchParams.entries());
@@ -147,164 +146,41 @@ export const GET: RequestHandler = async ({ request }) => {
 			throw error;
 		}
 	}
-};
+}
 
-export async function POST(request: any) {
-	const url = new URL(request.url);
+export async function POST({ request }) {
+	const { context, class: classParam } = await request.json();
+	
+	const options = {
+		hostname: 'demo-weborca.cloud.orcamo.jp',
+		path: `${context}?class=${classParam}`,
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		rejectUnauthorized: false  // 自己署名証明書を許可（開発環境のみ）
+	};
 
-	const searchParams = url.searchParams;
-	//ORCAAPI contextパスを取得
-	const params = Object.fromEntries(searchParams.entries());
-	const contextPath = params.context;
-
-	//設定値の読み込み
-	const config = safeLoadConfig();
-
-	//ORCAリクエスト用のURLを作成
-	const ORCAUrl = new URL(config.orcaUrl);
-	ORCAUrl.pathname = ORCAUrl.pathname + contextPath;
-
-	const body = await request.request.json();
-
-	// searchParamsの各パラメータをorcaUrlのsearchParamsに追加
-	// bodyにRequest_Number要素が含まれるか確認
-	const requestNumber = body.Request_Number;
-	//console.log('Request_Number:', body.hasOwnProperty('Request_Number'));
-
-	if (hasKeyDeep(body, 'Request_Number', 1)) {
-		//Request_Numberが優先する為、class要素が含まれる場合は除く
-		for (const [key, value] of searchParams) {
-			if (key !== 'context' && key !== 'class') ORCAUrl.searchParams.append(key, value);
-		}
-	} else {
-		for (const [key, value] of searchParams) {
-			if (key !== 'context') ORCAUrl.searchParams.append(key, value);
-		}
-	}
-
-	//jsonリクエストをorcaapi形式のXMLに変換する
-	const requestbBody = json2Xml(body);
-	//console.log('requestbBody', requestbBody);
-
-	const orcaCertificate = config.orcaCertificate;
-	const orcaCertPassword = config.orcaCertPassword;
-	const orcaId = config.orcaId;
-	const orcaPassword = config.orcaPassword;
-	//console.error('ORCAUrl.href:', ORCAUrl.href);
-	if (orcaCertificate.length === 0) {
-		// 証明書情報が無い場合は利用しない（オンプレなどのWebOrca）場合として判断する
-		const authHeader = 'Basic ' + Buffer.from(`${orcaId}:${orcaPassword}`).toString('base64');
-		const headers = {
-			'Content-type': 'application/xm',
-			Authorization: authHeader
-		};
-
-		try {
-			// Fetch リクエスト
-			//console.error('ORCAUrl.href:', ORCAUrl.href);
-			//console.error('authHeader:', authHeader);
-			const response = await fetch(ORCAUrl.href, {
-				method: 'POST',
-				headers: headers,
-				body: requestbBody
+	return new Promise((resolve, reject) => {
+		const req = https.request(options, (res) => {
+			let data = '';
+			
+			res.on('data', (chunk) => {
+				data += chunk;
 			});
-
-			if (!response.ok) {
-				const data = {
-					status: `HTTP error! status: ${response.status}`,
-					message: 'check parameters( ? > & )',
-					params: params
-				};
-				return json(data);
-			}
-
-			const contentType = response.headers.get('content-type');
-			let data;
-			if (contentType && contentType.includes('application/json')) {
-				data = await response.json();
-			} else {
-				// XMLの場合もResponseオブジェクトとして返す
-				const text = await response.text();
-				//JSONに変換
-				data = orcaJson(text);
-			}
-			return json(data);
-		} catch (error) {
-			console.error('Error:', error);
-			throw error;
-		}
-	} else {
-		// 証明書の読み込みと認証方法の区別
-		const certPath = path.join(process.cwd(), 'static', 'cert', orcaCertificate);
-		if (!fs.existsSync(certPath)) {
-			throw new Error(`Certificate file not found: ${certPath}`);
-		}
-		// P12ファイルをPEMに変換
-		const p12Buffer = fs.readFileSync(certPath);
-		const p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(p12Buffer).bytes());
-		const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, orcaCertPassword);
-
-		// 証明書とプライベートキーを取得
-		const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
-		const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[
-			forge.pki.oids.pkcs8ShroudedKeyBag
-		];
-		if (!certBags?.[0]?.cert || !keyBags?.[0]?.key) {
-			throw new Error('Failed to extract certificate or private key from P12 file');
-		}
-
-		const certificate = forge.pki.certificateToPem(certBags[0].cert);
-		const privateKey = forge.pki.privateKeyToPem(keyBags[0].key);
-
-		// HTTPS エージェントの設定を修正
-		const agent = new https.Agent({
-			cert: certificate,
-			key: privateKey,
-			rejectUnauthorized: false // 開発時のみ。本番環境では true にすることを推奨
+			
+			res.on('end', () => {
+				resolve(json(JSON.parse(data)));
+			});
 		});
 
-		//const requestUrl = orcaUrl + '/api01rv2/patientgetv2?id=' + ptid + '&format=json';
-		const authHeader = 'Basic ' + Buffer.from(`${orcaId}:${orcaPassword}`).toString('base64');
-		const headers = {
-			'Content-type': 'application/xm',
-			Authorization: authHeader
-		};
+		req.on('error', (error) => {
+			reject(error);
+		});
 
-		try {
-			// Fetch リクエスト
-			const response = await fetch(ORCAUrl.href, {
-				method: 'POST',
-				headers: headers,
-				agent: agent,
-				body: requestbBody
-			});
-
-			if (!response.ok) {
-				const data = {
-					status: `HTTP error! status: ${response.status}`,
-					message: 'check parameters( ? > & )',
-					params: params
-				};
-				return json(data);
-			}
-
-			const contentType = response.headers.get('content-type');
-			let data;
-			if (contentType && contentType.includes('application/json')) {
-				data = await response.json();
-			} else {
-				// XMLの場合もResponseオブジェクトとして返す
-				const text = await response.text();
-				//JSONに変換
-				data = orcaJson(text);
-				//console.log(data);
-			}
-			return json(data);
-		} catch (error) {
-			console.error('Detailed error:', error);
-			throw error;
-		}
-	}
+		req.write(JSON.stringify(request.body));
+		req.end();
+	});
 }
 
 // 設定ファイルの読み込み
@@ -493,7 +369,7 @@ function removeChildArrays(obj: any, index?: number): any {
 			for (const n in objList) {
 				if (n.replace(key, '') === '_child') {
 					const type = Array.isArray(objList[n]) ? 'array' : typeof objList[n];
-					//console.log(key, type);
+					console.log(key, type);
 					//子要素が1つの場合は配列[]ではなくオブジェクト{}になっている場合があるので配列で統一する
 					if (type === 'array') {
 						result[key] = objList[n];
